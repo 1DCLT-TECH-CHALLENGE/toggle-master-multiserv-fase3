@@ -1,85 +1,273 @@
-# toggle-master-multiserv-fase3
+# ToggleMaster — Fase 3: IaC + DevSecOps + GitOps
 
-TECH CHALLENGE
+> **Turma:** 1DCLT · **Fase:** 3 · **Stack:** Terraform · GitHub Actions · ArgoCD · AWS EKS
 
-Tech Challenge é o projeto que englobará os conhecimentos obtidos em todas as disciplinas da fase. Esta é uma atividade que, em princípio, deve ser desenvolvida em grupo. Importante atentar-se ao prazo de entrega, pois trata-se de uma atividade obrigatória, uma vez que vale 90% da nota de todas as disciplinas da fase.
-Nota Importante sobre o Ambiente de Nuvem (Terraform & IAM)
-Assim como na fase anterior, temos restrições para quem usa o AWS Academy:
+---
 
-Opção A: AWS Academy:
-• Seu código Terraform não pode criar Roles ou Policies de IAM.
-• O Terraform deve ser configurado para utilizar a LabRole existente para o Cluster EKS e para os Node Groups.
-• Você deverá importar os dados da LabRole (via data source no Terraform ou variável) para associá-la aos recursos.
+## Estrutura do Monorepo
 
-Opção B: Conta Pessoal:
-• Você tem liberdade total para criar as roles de IAM via Terraform (recomendado para um portfólio profissional).
+```
+toggle-master-fase3/
+├── .github/
+│   └── workflows/
+│       ├── ci-reusable.yml        # Pipeline principal reutilizável (5 jobs)
+│       ├── ci-auth.yml            # Chama ci-reusable para auth (Go)
+│       ├── ci-flag.yml            # Chama ci-reusable para flag (Python)
+│       ├── ci-targeting.yml       # Chama ci-reusable para targeting (Python)
+│       ├── ci-evaluation.yml      # Chama ci-reusable para evaluation (Go)
+│       └── ci-analytics.yml       # Chama ci-reusable para analytics (Python)
+│
+├── terraform/
+│   ├── environments/
+│   │   └── prod/
+│   │       ├── main.tf            # Orquestra todos os módulos
+│   │       ├── variables.tf
+│   │       ├── outputs.tf
+│   │       ├── versions.tf        # Backend S3 + providers
+│   │       └── terraform.tfvars   # ← PREENCHER antes do apply
+│   └── modules/
+│       ├── networking/            # VPC, subnets, IGW, NAT, route tables
+│       ├── iam-oidc/              # OIDC Provider + IAM Role GitHub Actions
+│       ├── eks/                   # Cluster EKS + node group + IAM
+│       ├── rds/                   # 3x PostgreSQL com senhas aleatórias
+│       ├── elasticache/           # Redis cluster
+│       ├── dynamodb/              # Tabela ToggleMasterAnalytics
+│       ├── sqs/                   # Fila analytics + DLQ
+│       └── ecr/                   # 5 repositórios com lifecycle policy
+│
+├── gitops/
+│   ├── apps/
+│   │   └── togglemaster-apps.yaml # ArgoCD Applications (App of Apps)
+│   └── base/
+│       ├── ingress.yaml           # Nginx Ingress com path-based routing
+│       ├── auth/                  # deployment.yaml + service.yaml
+│       ├── flag/                  # deployment.yaml + service.yaml
+│       ├── targeting/             # deployment.yaml + service.yaml
+│       ├── evaluation/            # deployment.yaml + service.yaml + HPA
+│       └── analytics/             # deployment.yaml + service.yaml + HPA
+│
+└── services/                      # ← COPIAR os serviços da Fase 2 aqui
+    ├── auth/
+    ├── flag/
+    ├── targeting/
+    ├── evaluation/
+    └── analytics/
+```
 
-DESAFIO
-A DevOps Solutions Inc. aprovou a arquitetura de microsserviços da Fase 2. No entanto, a operação se tornou insustentável.
-● Os desenvolvedores estão rodando kubectl apply de suas máquinas locais, gerando conflitos de versão.
-● As credenciais do banco de dados estão sendo passadas em arquivos de texto sem segurança.
-● Recentemente, uma vulnerabilidade em uma biblioteca Go passou despercebida e foi para produção.
-Tech Challenge Página 3 de 7
-● Recriar o ambiente de homologação leva dias porque foi feito manualmente no console.
-A ordem agora é: "Se não está no código, não existe". Precisamos de infraestrutura imutável, pipelines de segurança (DevSecOps) e GitOps para o deploy.
-Você deve automatizar toda a infraestrutura e o ciclo de vida dos 5 microsserviços do ToggleMaster (auth, flag, targeting, evaluation, analytics) utilizando as práticas de IaC, CI/CD e DevSecOps.
+---
 
-REQUISITOS TÉCNICOS
-1. Infraestrutura como Código (Terraform)
-Você deve substituir a criação manual da Fase 2 por código Terraform. Crie um projeto Terraform organizado (preferencialmente usando módulos) que provisione:
-1. Networking: VPC, Subnets (Públicas e Privadas), Internet Gateway e Route Tables.
-2. Cluster EKS: O cluster Kubernetes e seus Node Groups.
-o Atenção Academy: Lembre-se de associar a LabRole.
-3. Bancos de Dados:
-o 3 instâncias RDS (PostgreSQL).
-o 1 Cluster ElastiCache (Redis).
-o 1 Tabela DynamoDB (ToggleMasterAnalytics).
-4. Mensageria: 1 Fila SQS.
-5. Repositórios: 5 repositórios no ECR (opcional via Terraform, mas recomendado).
-Requisito de Estado: O terraform.tfstate não pode ficar local. Configure o Backend Remoto usando um Bucket S3 (e opcionalmente a flag use_lockfile para Lock), conforme visto na Aula 2 de IaC.
+## Pré-requisitos
 
-2. Pipeline de Integração Contínua (CI) & DevSecOps
-Crie workflows (ex: GitHub Actions) para cada um dos 5 microsserviços. O pipeline deve rodar a cada Pull Request e Push na Main.
-O pipeline deve conter os seguintes estágios (Jobs):
-1. Build & Unit Test: Compilar o código e rodar testes unitários (se houver).
-2. Linter/Static Analysis: Rodar ferramentas de linting (ex: golangci-lint para Go, pylint/flake8 para Python).
-3. Security Scan (SAST & SCA):
-o SCA (Software Composition Analysis): Verificar vulnerabilidades nas dependências (ex: usar Trivy em modo fs ou OWASP Dependency Check).
-o SAST (Static Application Security Testing): Verificar vulnerabilidades no código fonte (ex: SonarCloud gratuito ou gosec/bandit).
-o Regra de Bloqueio: Se uma vulnerabilidade CRÍTICA for encontrada, o pipeline deve falhar e não prosseguir.
-4. Docker Build & Push:
-o Construir a imagem Docker.
-o Rodar um scan de vulnerabilidades na imagem (Container Scan com Trivy).
-o Logar no AWS ECR.
-o Enviar a imagem para o ECR com a tag do commit hash (ex: v1.0.0-a1b2c3d).
+- AWS CLI v2 configurado com credenciais de conta própria
+- Terraform >= 1.6
+- kubectl
+- helm >= 3.14
+- git
 
-3. Entrega Contínua (CD) & GitOps
-Para o deploy, abandonaremos o push direto via CI. Vamos adotar o GitOps.
-1. Repositório de GitOps: Crie um repositório separado (ou uma pasta separada no monorepo) contendo apenas os manifestos Kubernetes (YAMLs) ou Helm Charts das aplicações.
+---
 
-2. Instalação do ArgoCD: Instale o ArgoCD no seu cluster EKS (pode usar Helm ou Terraform com provider helm/kubectl).
-3. Atualização Automática:
-o Ao final do pipeline de CI (passo anterior), adicione um passo que atualiza a tag da imagem no repositório de GitOps (alterando o arquivo deployment.yaml com a nova tag da imagem gerada).
-4. Sync: Configure o ArgoCD para monitorar esse repositório e sincronizar automaticamente as mudanças para o cluster EKS.
-o Mostre a interface do ArgoCD gerenciando os 5 microsserviços.
+## Setup Inicial (fazer uma vez)
 
-ENTREGÁVEIS DA FASE 3
+### 1. Criar o bucket S3 para o tfstate
 
-Vídeo de Demonstração (até 20 min):
-● IaC: Mostre o terraform plan e o terraform apply rodando (ou o resultado final na AWS: VPCs, RDS, EKS criados via código).
-● Pipeline DevSecOps: Faça uma alteração no código de um microsserviço (ex: insira um erro proposital ou uma dependência vulnerável) e mostre o pipeline falhando no passo de segurança. Depois corrija e mostre passando.
-● GitOps: Mostre o pipeline atualizando a tag da imagem no repositório de GitOps.
-● ArgoCD: Mostre o ArgoCD detectando a mudança e sincronizando a nova versão no cluster automaticamente.
+> Fazer **antes** do `terraform init` — o bucket precisa existir primeiro.
 
-Código Fonte no Repositório:
-● Todo o código Terraform (bem estruturado e componentizado).
-● Arquivos de Workflow (.yaml) do GitHub Actions (ou ferramenta similar) com os passos de DevSecOps implementados.
-● Manifestos Kubernetes ajustados para o GitOps.
+```bash
+aws s3 mb s3://togglemaster-tfstate-fase3 --region us-east-1
+aws s3api put-bucket-versioning \
+  --bucket togglemaster-tfstate-fase3 \
+  --versioning-configuration Status=Enabled
+```
 
-Relatório de Entrega (.PDF ou .txt):
-● Nomes dos participantes.
-● Link da documentação e do vídeo.
-● Breve resumo dos desafios encontrados e decisões tomadas.
-● Print da estimativa de custos da AWS.
-Lembrando que qualquer dúvida, podem nos chamar no Discord.
-Boa sorte!
+### 2. Preencher terraform.tfvars
+
+Editar `terraform/environments/prod/terraform.tfvars`:
+
+```hcl
+github_org  = "SEU_GITHUB_ORG"   # ex: "1DCLT-TECH-CHALLENGE"
+github_repo = "toggle-master-fase3"
+```
+
+### 3. Copiar serviços da Fase 2
+
+```bash
+# Criar estrutura de serviços no monorepo
+mkdir -p services/{auth,flag,targeting,evaluation,analytics}
+
+# Copiar código da Fase 2 para cada pasta
+# Cada pasta deve ter: Dockerfile + código fonte
+```
+
+---
+
+## Deploy da Infraestrutura (Terraform)
+
+```bash
+cd terraform/environments/prod
+
+# Inicializa com backend S3
+terraform init
+
+# Valida e visualiza o plano
+terraform validate
+terraform plan -out=tfplan
+
+# Aplica (leva ~15-20 min — EKS é o mais demorado)
+terraform apply tfplan
+```
+
+> **Outputs importantes após o apply:**
+> - `github_actions_role_arn` → adicionar como secret `GHA_ROLE_ARN` no GitHub
+> - `eks_cluster_name` → usar no kubeconfig
+> - `ecr_repositories` → URLs dos repos ECR
+> - `kubeconfig_command` → comando para configurar o kubectl
+
+### Configurar kubectl
+
+```bash
+# Executar o comando exibido no output "kubeconfig_command"
+aws eks update-kubeconfig --region us-east-1 --name togglemaster-prod-cluster
+kubectl get nodes
+```
+
+---
+
+## Configurar GitHub Actions
+
+### Secrets necessários no repositório
+
+Ir em **Settings → Secrets and variables → Actions** e adicionar:
+
+| Secret | Valor |
+|--------|-------|
+| `AWS_ACCOUNT_ID` | ID da sua conta AWS (12 dígitos) |
+| `GHA_ROLE_ARN` | ARN da role do output `github_actions_role_arn` |
+
+> O OIDC já está configurado — não precisa de Access Key nem Secret Key.
+
+---
+
+## Deploy do ArgoCD e GitOps
+
+### 1. Verificar instalação do ArgoCD (feita pelo Terraform)
+
+```bash
+kubectl get pods -n argocd
+kubectl get svc argocd-server -n argocd
+```
+
+### 2. Obter senha inicial do ArgoCD
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret \
+  -o jsonpath="{.data.password}" | base64 -d && echo
+```
+
+### 3. Atualizar repoURL nos manifestos ArgoCD
+
+Editar `gitops/apps/togglemaster-apps.yaml` e substituir `SEU_GITHUB_ORG`:
+
+```bash
+sed -i 's/SEU_GITHUB_ORG/sua-org-real/g' gitops/apps/togglemaster-apps.yaml
+```
+
+### 4. Aplicar as Applications no ArgoCD
+
+```bash
+kubectl apply -f gitops/apps/togglemaster-apps.yaml -n argocd
+```
+
+### 5. Instalar nginx-ingress (necessário para o Ingress funcionar)
+
+```bash
+helm upgrade --install ingress-nginx ingress-nginx \
+  --repo https://kubernetes.github.io/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace
+```
+
+### 6. Acessar a UI do ArgoCD
+
+```bash
+# Obter o IP externo
+kubectl get svc argocd-server -n argocd
+
+# Acessar: http://<EXTERNAL-IP>
+# Login: admin / <senha obtida acima>
+```
+
+---
+
+## Fluxo GitOps (como funciona)
+
+```
+Developer → Push para main
+    ↓
+GitHub Actions (ci-<service>.yml)
+    ↓
+  Job 1: Build & Test
+  Job 2: Lint (golangci-lint / flake8)
+  Job 3: Security Scan → FALHA se CRITICAL encontrado
+  Job 4: Docker Build → Trivy Image Scan → Push ECR
+  Job 5: Atualiza gitops/base/<service>/deployment.yaml com nova tag
+    ↓
+ArgoCD detecta mudança no repo (polling a cada 3 min)
+    ↓
+ArgoCD sincroniza → kubectl apply automático no EKS
+    ↓
+Rolling update sem downtime
+```
+
+---
+
+## Demonstração DevSecOps (para o vídeo)
+
+### Inserir vulnerabilidade proposital (Go)
+
+```go
+// Em services/auth/main.go — adicionar import vulnerável
+import "github.com/dgrijalva/jwt-go" // CVE conhecido
+```
+
+O pipeline vai falhar no Job 3 com:
+```
+CRITICAL: CVE-XXXX-XXXX in github.com/dgrijalva/jwt-go
+```
+
+### Correção
+
+```go
+// Substituir pelo fork mantido
+import "github.com/golang-jwt/jwt/v5"
+```
+
+Pipeline passa, nova imagem é pushed, ArgoCD deploya automaticamente.
+
+---
+
+## Estimativa de Custo (us-east-1)
+
+| Recurso | Configuração | Custo/mês estimado |
+|---------|-------------|-------------------|
+| EKS Cluster | 1 cluster | ~$72 |
+| EC2 Nodes | 2x t3.medium | ~$60 |
+| RDS PostgreSQL | 3x db.t3.micro | ~$45 |
+| ElastiCache | 1x cache.t3.micro | ~$12 |
+| NAT Gateway | 2x (HA) | ~$65 |
+| ECR | 5 repos (~1GB) | ~$1 |
+| DynamoDB | Pay per request | ~$1 |
+| SQS | Pay per use | ~$1 |
+| **Total estimado** | | **~$257/mês** |
+
+> Para economia durante desenvolvimento: destruir com `terraform destroy` ao final do dia.
+
+---
+
+## Destruir o ambiente
+
+```bash
+cd terraform/environments/prod
+terraform destroy
+```
+
+> O bucket S3 do tfstate **não** é destruído automaticamente (proteção de estado).
