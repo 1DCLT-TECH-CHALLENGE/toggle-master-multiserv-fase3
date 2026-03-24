@@ -20,7 +20,7 @@ spec:
           # TAG ATUALIZADA AUTOMATICAMENTE PELO CI
          image: 905418042721.dkr.ecr.us-east-1.amazonaws.com/togglemaster-analytics:latest
           ports:
-            - containerPort: 8004
+            - containerPort: 80
           env:
             - name: PORT
               value: "8004"
