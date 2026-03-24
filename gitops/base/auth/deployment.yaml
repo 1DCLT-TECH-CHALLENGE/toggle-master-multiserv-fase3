@@ -19,7 +19,7 @@ spec:
       containers:
         - name: auth
           # TAG ATUALIZADA AUTOMATICAMENTE PELO CI
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/togglemaster-auth:latest
+          image: 905418042721.dkr.ecr.us-east-1.amazonaws.com/togglemaster-auth:latest
           ports:
             - containerPort: 8001
           env:
