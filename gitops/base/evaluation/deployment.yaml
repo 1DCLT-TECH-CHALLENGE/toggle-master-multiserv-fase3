@@ -74,14 +74,14 @@ spec:
               memory: 512Mi
           livenessProbe:
             httpGet:
-              path: /health
-              port: 8004
+              path: /
+              port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8004
+              path: /
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
 ---
