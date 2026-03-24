@@ -19,7 +19,7 @@ spec:
         - name: flag
           image: 905418042721.dkr.ecr.us-east-1.amazonaws.com/togglemaster-analytics:latest
           ports:
-            - containerPort: 8002
+            - containerPort: 80
           env:
             - name: PORT
               value: "8002"
@@ -57,13 +57,13 @@ spec:
               memory: 256Mi
           livenessProbe:
             httpGet:
-              path: /health
-              port: 8002
+              path: /
+              port: 80
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8002
+              path: /
+              port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
