@@ -14,7 +14,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_GITHUB_ORG/toggle-master-fase3
+    repoURL: https://github.com/1DCLT-TECH-CHALLENGE/toggle-master-multiserv-fase3
     targetRevision: main
     path: gitops/base/auth
   destination:
@@ -38,7 +38,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_GITHUB_ORG/toggle-master-fase3
+    repoURL: https://github.com/1DCLT-TECH-CHALLENGE/toggle-master-multiserv-fase3
     targetRevision: main
     path: gitops/base/flag
   destination:
@@ -62,7 +62,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_GITHUB_ORG/toggle-master-fase3
+    repoURL: https://github.com/1DCLT-TECH-CHALLENGE/toggle-master-multiserv-fase3
     targetRevision: main
     path: gitops/base/targeting
   destination:
@@ -86,7 +86,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_GITHUB_ORG/toggle-master-fase3
+    repoURL: https://github.com/1DCLT-TECH-CHALLENGE/toggle-master-multiserv-fase3
     targetRevision: main
     path: gitops/base/evaluation
   destination:
@@ -110,7 +110,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_GITHUB_ORG/toggle-master-fase3
+    repoURL: https://github.com/1DCLT-TECH-CHALLENGE/toggle-master-multiserv-fase3
     targetRevision: main
     path: gitops/base/analytics
   destination:
@@ -134,7 +134,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/SEU_GITHUB_ORG/toggle-master-fase3
+    repoURL: https://github.com/1DCLT-TECH-CHALLENGE/toggle-master-multiserv-fase3
     targetRevision: main
     path: gitops/base
     directory:
