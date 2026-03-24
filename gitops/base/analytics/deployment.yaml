@@ -18,7 +18,7 @@ spec:
       containers:
         - name: analytics
           # TAG ATUALIZADA AUTOMATICAMENTE PELO CI
-          image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/togglemaster-analytics:latest
+          image: 905418042721.dkr.ecr.us-east-1.amazonaws.com/togglemaster-analytics:latest
           ports:
             - containerPort: 8005
           env:
