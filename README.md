@@ -271,3 +271,5 @@ terraform destroy
 ```
 
 > O bucket S3 do tfstate **não** é destruído automaticamente (proteção de estado).
+
+trigger pipeline
