@@ -36,6 +36,8 @@ on:
         required: true
       AWS_ACCOUNT_ID:
         required: true
+      AWS_SESSION_TOKEN:
+        required: true
 
 env:
   AWS_REGION:  us-east-1
