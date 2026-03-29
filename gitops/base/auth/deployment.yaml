@@ -21,7 +21,7 @@ spec:
           # TAG ATUALIZADA AUTOMATICAMENTE PELO CI
           image: 905418042721.dkr.ecr.us-east-1.amazonaws.com/togglemaster-auth:latest
           ports:
-            - containerPort: 80
+            - containerPort: 8001
           env:
             - name: PORT
               value: "8001"
@@ -50,6 +50,8 @@ spec:
                 secretKeyRef:
                   name: rds-auth-secret
                   key: dbname
+            - name: MASTER_KEY
+              value: "admin-secreto-123"
           resources:
             requests:
               cpu: 100m
@@ -59,13 +61,13 @@ spec:
               memory: 256Mi
           livenessProbe:
             httpGet:
-              path: /
-              port: 80
+              path: /health
+              port: 8001
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /
-              port: 80
+              path: /health
+              port: 8001
             initialDelaySeconds: 5
             periodSeconds: 10
