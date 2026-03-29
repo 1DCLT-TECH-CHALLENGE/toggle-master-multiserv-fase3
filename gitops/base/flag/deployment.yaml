@@ -23,6 +23,8 @@ spec:
           env:
             - name: PORT
               value: "8002"
+            - name: AUTH_SERVICE_URL
+              value: "http://togglemaster-auth:8001"
             - name: DB_HOST
               valueFrom:
                 secretKeyRef:
@@ -48,6 +50,8 @@ spec:
                 secretKeyRef:
                   name: rds-core-secret
                   key: dbname
+  	   - name: AUTH_SERVICE_URL
+  	     value: "http://togglemaster-auth:8001"
           resources:
             requests:
               cpu: 100m
@@ -57,13 +61,13 @@ spec:
               memory: 256Mi
           livenessProbe:
             httpGet:
-              path: /healthy
+              path: /health
               port: 8002
             initialDelaySeconds: 15
             periodSeconds: 20
           readinessProbe:
             httpGet:
-              path: /healthy
+              path: /health
               port: 8002
             initialDelaySeconds: 5
             periodSeconds: 10
